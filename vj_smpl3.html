@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title> VJ Sample 3 </title>
+</head>
+
+<body bgcolor="#000" onload="init()">
+
+<canvas id="cvs"></canvas>
+
+<script>
+window.AudioContext = window.webkitAudioContext || window.AudioContext;
+var context = new AudioContext();
+var analyser = context.createAnalyser();
+
+var cv = document.getElementById('cvs');
+var ctx = cv.getContext('2d');
+cv.width = window.innerWidth;
+cv.height = window.innerHeight;
+
+navigator.getUserMedia = (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia);
+navigator.getUserMedia(
+	{ video:false, audio:true },
+	function(stream) {
+		var mic = context.createMediaStreamSource(stream);
+		mic.connect(analyser);
+	},
+	function(error) { return; }
+);
+
+function drawFFT(fftData) {
+	var fftBars = analyser.fftSize / 2;
+	var barW = 1;
+	for (var i = 0; i < fftBars; i++) {
+		var amp = fftData[i]*2;
+		var xlog = Math.log(i)*100;
+		//var xlog = i;
+		ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+		ctx.fillRect(ctx.canvas.width, xlog, -amp, barW);
+		ctx.fillRect(0, xlog, amp, barW);
+	}
+}
+
+function animloop(time) {
+	var freqData = new Uint8Array(analyser.frequencyBinCount);
+	analyser.getByteFrequencyData(freqData); 
+
+	ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+	drawFFT(freqData);
+
+	window.requestAnimationFrame(animloop);
+}
+
+function init(e) {
+	analyser.fftSize = 1024;
+	animloop();
+}
+
+</script>
+</body></html>

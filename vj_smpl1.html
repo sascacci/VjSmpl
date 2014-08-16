@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title> VJ Sample 1 </title>
+</head>
+
+<body bgcolor="#000" onload="init()">
+
+<canvas id="cvs"></canvas>
+
+<script>
+window.AudioContext = window.webkitAudioContext || window.AudioContext;
+var context = new AudioContext();
+var analyser = context.createAnalyser();
+
+var cv = document.getElementById('cvs');
+var ctx = cv.getContext('2d');
+cv.width = window.innerWidth;
+cv.height = window.innerHeight;
+
+navigator.getUserMedia = (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia);
+navigator.getUserMedia(
+	{ video:false, audio:true },
+	function(stream) {
+		var mic = context.createMediaStreamSource(stream);
+		mic.connect(analyser);
+	},
+	function(error) { return; }
+);
+
+function drawWave(waveData) {
+	var posY = ctx.canvas.height / 2;
+	
+	ctx.beginPath();
+	ctx.lineJoin = "round";
+	ctx.strokeStyle="#f66";
+	ctx.lineWidth = 7;
+	for (var i = 0; i < ctx.canvas.width; i++) {
+		/* convert uint8(0-255) to -128 - +127*/
+		var amp = waveData[i] - 128;
+		if (i == 0) {
+			ctx.moveTo(i*2, posY + amp);
+		} else {
+			ctx.lineTo(i*2, posY + amp);
+		}
+	}
+	ctx.stroke();
+}
+
+function animloop() {
+	var waveData = new Uint8Array(analyser.frequencyBinCount);
+	analyser.getByteTimeDomainData(waveData);
+
+	ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+	drawWave(waveData);
+
+	window.requestAnimationFrame(animloop);
+}
+
+function init(e) {
+	animloop();
+}
+
+</script>
+</body></html>

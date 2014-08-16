@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title> VJ Sample 4 </title>
+</head>
+
+<body bgcolor="#000" onload="init()">
+
+<canvas id="cvs"></canvas>
+
+<script>
+window.AudioContext = window.webkitAudioContext || window.AudioContext;
+var context = new AudioContext();
+var analyser = context.createAnalyser();
+
+var cv = document.getElementById('cvs');
+var ctx = cv.getContext('2d');
+cv.width = window.innerWidth;
+cv.height = window.innerHeight;
+
+var inputs = null;
+var noteCnt=-1;
+var noteCntMax=64;
+
+navigator.getUserMedia = (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia);
+navigator.getUserMedia(
+	{ video:false, audio:true },
+	function(stream) {
+		var microphone = context.createMediaStreamSource(stream);
+		microphone.connect(analyser);
+	},
+	function(error) { return; }
+);
+
+function drawWave(waveData) {
+	var posY = ctx.canvas.height / 2;
+	
+	ctx.beginPath();
+	ctx.lineJoin = "round";
+	ctx.strokeStyle="#f66";
+	ctx.lineWidth = 7;
+	for (var i = 0; i < ctx.canvas.width; i++) {
+		var amp = waveData[i] - 128;
+		if (i == 0) {
+			ctx.moveTo(i*2, posY + amp);
+		} else {
+			ctx.lineTo(i*2, posY + amp);
+		}
+	}
+	ctx.stroke();
+}
+
+function drawCircle() {
+
+	if (noteCnt>0) {
+		noteCnt--;
+	} else {
+		return;
+	}
+
+	var x = ctx.canvas.width/2;
+	var y = ctx.canvas.height/2;
+
+	var alpha = noteCnt / noteCntMax;
+	var aSize = noteCnt*8;
+
+	ctx.beginPath();
+	ctx.fillStyle = 'rgba(255, 255, 255, '+ alpha +')';
+	ctx.arc(x, y, aSize, 0, Math.PI*2, false);
+
+	ctx.fill();
+}
+
+
+function animloop() {
+	var waveData = new Uint8Array(analyser.frequencyBinCount);
+	analyser.getByteTimeDomainData(waveData);
+
+	ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+	drawWave(waveData);
+
+	drawCircle();
+
+	window.requestAnimationFrame(animloop);
+}
+
+function init(e) {
+	animloop();
+
+	/* Web MIDI Init */
+	navigator.requestMIDIAccess({sysex:false}).then( success, failure );
+}
+
+function success( m ) {
+	inputs = m.inputs();
+
+	for (var i = 0; i < inputs.length; i++) {
+		inputs[i].onmidimessage = handleMIDIMessage;
+	}
+}
+
+function failure( error ) { }
+
+function handleMIDIMessage( ev ) {
+	switch(ev.data[0]) {
+	case 0x90: // Note On
+		switch(ev.data[1]) {
+		case 0:
+			break;
+		case 1:
+			break;
+		case 2:
+			break;
+		default:
+			if (ev.data[2]) {
+				noteCnt = Math.floor(noteCntMax * ev.data[2] / 127);
+			}
+			break;
+		}
+		break;
+	case 0x80: // Note Off
+		break;
+	case 0xB0: // CC
+		switch(ev.data[1]) {
+		case 0:
+			break;
+		case 1:
+			break;
+		case 2:
+			break;
+		}		
+		break;
+	default:
+		break;
+	}
+}
+</script>
+</body></html>
