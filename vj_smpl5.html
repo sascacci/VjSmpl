@@ -22,6 +22,7 @@ var inputs = null;
 var noteCnt=-1;
 var noteCntMax=64;
 var msg=null;
+var midi=null;
 
 navigator.getUserMedia = (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia);
 navigator.getUserMedia(
@@ -103,7 +104,17 @@ function init(e) {
 }
 
 function success( m ) {
-	inputs = m.inputs();
+	midi = m;
+
+	if (typeof midi.inputs === "function") {
+		inputs = midi.inputs();
+	} else {
+		var inputIterator = midi.inputs.values();
+		inputs = [];
+		for (var o = inputIterator.next(); !o.done; o = inputIterator.next()) {
+			inputs.push(o.value)
+		}
+	}
 
 	for (var i = 0; i < inputs.length; i++) {
 		inputs[i].onmidimessage = handleMIDIMessage;
@@ -113,7 +124,7 @@ function success( m ) {
 function failure( error ) { }
 
 function handleMIDIMessage( ev ) {
-	switch(ev.data[0]) {
+	switch(ev.data[0] & 0xF0) {
 	case 0x90: // Note On
 		switch(ev.data[1]) {
 		case 38: // Snare
