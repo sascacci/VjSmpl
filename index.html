@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title> MIDI Monitor </title>
+</head>
+
+<body bgcolor="#000" onload="init()">
+
+<canvas id="cvs"></canvas>
+
+<script>
+
+var velolog = [];
+var idx = 0;
+
+var cv = document.getElementById('cvs');
+var ctx = cv.getContext('2d');
+cv.width = window.innerWidth;
+cv.height = window.innerHeight;
+
+var inputs = null;
+var midi=null;
+var noteCounter = 0;
+
+var xofst = 5;
+
+
+function drawConter() {
+	var aText = String( noteCounter );
+	var size = 400;
+	ctx.font = size + 'px' + "'Arial'";
+	ctx.textAlign = "center";
+	ctx.textBaseline = "middle";
+	ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+	ctx.fillText(aText, ctx.canvas.width*0.5, ctx.canvas.height*0.5);
+}
+
+function drawLine() {
+	ctx.strokeStyle = 'rgba(255, 255, 255, 1)';
+	ctx.beginPath();
+	ctx.moveTo(0, ctx.canvas.height);
+	for (var i = 0; i < idx; i++) {
+		var x = i*xofst;
+		var y = ctx.canvas.height * ( 1 - velolog[i] / 127);
+		ctx.lineTo(x, y);
+	}
+	//ctx.endPath();
+	ctx.stroke();
+}
+
+
+
+function animloop() {
+	ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+	drawConter();
+
+	window.requestAnimationFrame(animloop);
+}
+
+function init(e) {
+	animloop();
+
+	window.addEventListener("resize", resize, false);
+
+	/* Web MIDI Init */
+	navigator.requestMIDIAccess({sysex:false}).then( success, failure );
+}
+
+function resize() {
+
+	cv.width = window.innerWidth;
+	cv.height = window.innerHeight;
+
+	cv.style.height= cv.height + 'px';
+	cv.style.width= cv.width + 'px';
+}
+
+
+function success( m ) {
+	midi = m;
+
+	if (typeof midi.inputs === "function") {
+		inputs = midi.inputs();
+	} else {
+		var inputIterator = midi.inputs.values();
+		inputs = [];
+		for (var o = inputIterator.next(); !o.done; o = inputIterator.next()) {
+			inputs.push(o.value)
+		}
+	}
+
+	for (var i = 0; i < inputs.length; i++) {
+		inputs[i].onmidimessage = handleMIDIMessage;
+	}
+}
+
+function failure( error ) { }
+
+function handleMIDIMessage( ev ) {
+	if (ev.data.length != 3) return;
+
+	switch(ev.data[0] & 0xF0) {
+	case 0x90: // Note On
+		switch(ev.data[1]) {
+		case 0:
+		default:
+			if (ev.data[2]) {
+				noteCounter = ev.data[2];
+				velolog[idx] = ev.data[2];
+
+			}
+			break;
+		}
+		break;
+	case 0x80: // Note Off
+		break;
+	case 0xB0: // CC
+		switch(ev.data[1]) {
+		case 0:
+			break;
+		case 1:
+			break;
+		case 2:
+			break;
+		}		
+		break;
+	default:
+		break;
+	}
+}
+window.addEventListener('keydown', function(e) {
+	switch (e.keyCode) {
+	case 32: // Space
+		break;
+	case 48: // 0
+		break;
+	case 49: // 1
+		break;
+	case 50: // 2
+		break;
+	case 51: // 3
+		break;
+	case 52: // 4
+		break;
+	case 53: // 5
+		break;
+	case 54: // 6
+		break;
+	case 55: // 7
+		break;
+	case 56: // 8
+		break;
+	case 57: // 9
+		break;
+	case 65: // A
+		break;
+	case 66: // B
+		break;
+	case 67: // C
+		noteCounter = 0;
+		break;
+	case 68: // D
+		break;
+	case 69: // E
+		break;
+	case 70: // F
+		break;
+	case 71: // G
+		break;
+	case 72: // H
+		break;
+	case 73: // I
+		break;
+	case 74: // J
+		break;
+	case 75: // K
+		break;
+	case 76: // L
+		break;
+	case 77: // M
+		break;
+	case 78: // N
+		var data = [0x90, 0, 127];
+		var ev = { data };
+		handleMIDIMessage( ev );
+		break;
+	case 79: // O
+		break;
+	case 80: // P
+		break;
+	case 81: // Q
+		break;
+	case 82: // R
+		break;
+	case 83: // S
+		break;
+	case 84: // T
+		break;
+	case 85: // U
+		break;
+	case 86: // V
+		break;
+	case 87: // W
+		break;
+	case 88: // X
+		break;
+	case 89: // Y
+		break;
+	case 90: // Z
+		break;
+	case 219: // @
+		break;
+	case 186: // +
+		break;
+	case 188: /* < */
+		break;
+	case 190: /* > */
+		break;
+	case 189: /* - */
+		break;
+	case 191: /* ? */
+		break;
+	case 221: /* ] */
+		break;
+	case 187: /* ^ */
+		break;
+	case 0: /* \ */
+		break;
+	case 16: // shift
+		break;
+	default:
+		break;
+	}
+}, false);
+
+</script>
+</body></html>

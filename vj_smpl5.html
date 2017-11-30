@@ -100,7 +100,7 @@ function init(e) {
 	animloop();
 
 	/* Web MIDI Init */
-	navigator.requestMIDIAccess({sysex:false}).then( success, failure );
+	navigator.requestMIDIAccess().then( success, failure );
 }
 
 function success( m ) {
@@ -152,7 +152,7 @@ function handleMIDIMessage( ev ) {
 			msg = "(⌒-⌒;)";
 			break;
 		case 36: // Kick
-			msg = "^_−☆";
+			msg = "^_-☆";
 			break;
 		default:
 			msg = "♪(´θ｀)ノ";
